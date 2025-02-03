@@ -53,6 +53,7 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
           onPress={() => {
             navigate(TODO_LISTS_ROUTE + '/' + r.id);
           }}
+          createdAt={r.created_at}
         />
       ))}
     </List>

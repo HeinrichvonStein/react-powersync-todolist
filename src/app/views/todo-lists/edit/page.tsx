@@ -12,7 +12,11 @@ import {
   List,
   TextField,
   Typography,
-  styled
+  styled,
+  Checkbox,
+  Alert,
+  Snackbar,
+  FormControlLabel
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
 import React, { Suspense } from 'react';
@@ -22,11 +26,6 @@ import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSch
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 
-/**
- * useSearchParams causes the entire element to fall back to client side rendering
- * This is exposed as a separate React component in order to suspend its render
- * and allow the root page to render on the server.
- */
 const TodoEditSection = () => {
   const powerSync = usePowerSync();
   const supabase = useSupabase();
@@ -42,7 +41,13 @@ const TodoEditSection = () => {
   );
 
   const [showPrompt, setShowPrompt] = React.useState(false);
+  const [showBulkConfirm, setShowBulkConfirm] = React.useState(false);
+  const [selectedTodos, setSelectedTodos] = React.useState<Set<string>>(new Set());
+  const [showSuccessMessage, setShowSuccessMessage] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
+
+  const incompleteTodos = todos.filter(todo => !todo.completed);
+  const hasSelection = selectedTodos.size > 0;
 
   const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
     const updatedRecord = { ...record, completed: completed };
@@ -65,6 +70,50 @@ const TodoEditSection = () => {
               WHERE id = ?`,
       [completed, updatedRecord.completed_at, updatedRecord.completed_by, record.id]
     );
+  };
+
+  const completeBulkTodos = async () => {
+    const userID = supabase?.currentSession?.user.id;
+    if (!userID) {
+      throw new Error(`Could not get user ID.`);
+    }
+
+    const completedAt = new Date().toISOString();
+
+    await powerSync.writeTransaction(async (tx) => {
+      for (const todoId of selectedTodos) {
+        await tx.execute(
+          `UPDATE ${TODOS_TABLE}
+           SET completed = ?,
+               completed_at = ?,
+               completed_by = ?
+           WHERE id = ?`,
+          [true, completedAt, userID, todoId]
+        );
+      }
+    });
+
+    setSelectedTodos(new Set());
+    setShowBulkConfirm(false);
+    setShowSuccessMessage(true);
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTodos(new Set(incompleteTodos.map(todo => todo.id)));
+    } else {
+      setSelectedTodos(new Set());
+    }
+  };
+
+  const toggleTodoSelection = (todoId: string, selected: boolean) => {
+    const newSelection = new Set(selectedTodos);
+    if (selected) {
+      newSelection.add(todoId);
+    } else {
+      newSelection.delete(todoId);
+    }
+    setSelectedTodos(newSelection);
   };
 
   const createNewTodo = async (description: string) => {
@@ -103,7 +152,32 @@ const TodoEditSection = () => {
         <S.FloatingActionButton onClick={() => setShowPrompt(true)}>
           <AddIcon />
         </S.FloatingActionButton>
-        <Box>
+
+        <Box sx={{ mb: 2 }}>
+          {incompleteTodos.length > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedTodos.size === incompleteTodos.length}
+                    indeterminate={selectedTodos.size > 0 && selectedTodos.size < incompleteTodos.length}
+                    onChange={(e) => toggleSelectAll(e.target.checked)}
+                  />
+                }
+                label="Select All"
+              />
+              {hasSelection && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setShowBulkConfirm(true)}
+                >
+                  Complete Selected ({selectedTodos.size})
+                </Button>
+              )}
+            </Box>
+          )}
+
           <List dense={false}>
             {todos.map((r) => (
               <TodoItemWidget
@@ -112,16 +186,19 @@ const TodoEditSection = () => {
                 onDelete={() => deleteTodo(r.id)}
                 isComplete={r.completed == 1}
                 toggleCompletion={() => toggleCompletion(r, !r.completed)}
+                showSelection={!r.completed}
+                isSelected={selectedTodos.has(r.id)}
+                onSelect={(selected) => toggleTodoSelection(r.id, selected)}
+                completedAt={r.completed_at}
               />
             ))}
           </List>
         </Box>
-        {/* TODO use a dialog service in future, this is just a simple example app */}
+
         <Dialog
           open={showPrompt}
           onClose={() => setShowPrompt(false)}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
+          aria-labelledby="create-dialog-title"
           PaperProps={{
             component: 'form',
             onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
@@ -131,9 +208,9 @@ const TodoEditSection = () => {
             }
           }}
         >
-          <DialogTitle id="alert-dialog-title">{'Create Todo Item'}</DialogTitle>
+          <DialogTitle id="create-dialog-title">Create Todo Item</DialogTitle>
           <DialogContent>
-            <DialogContentText id="alert-dialog-description">Enter a description for a new todo item</DialogContentText>
+            <DialogContentText>Enter a description for a new todo item</DialogContentText>
             <TextField sx={{ marginTop: '10px' }} fullWidth inputRef={nameInputRef} autoFocus label="Task Name" />
           </DialogContent>
           <DialogActions>
@@ -141,6 +218,36 @@ const TodoEditSection = () => {
             <Button type="submit">Create</Button>
           </DialogActions>
         </Dialog>
+
+        <Dialog
+          open={showBulkConfirm}
+          onClose={() => setShowBulkConfirm(false)}
+          aria-labelledby="bulk-confirm-dialog-title"
+        >
+          <DialogTitle id="bulk-confirm-dialog-title">Complete Multiple Items</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to mark {selectedTodos.size} items as complete?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowBulkConfirm(false)}>Cancel</Button>
+            <Button onClick={completeBulkTodos} variant="contained" color="primary">
+              Complete Items
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={showSuccessMessage}
+          autoHideDuration={3000}
+          onClose={() => setShowSuccessMessage(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setShowSuccessMessage(false)} severity="success" sx={{ width: '100%' }}>
+            Successfully completed {selectedTodos.size} items
+          </Alert>
+        </Snackbar>
       </Box>
     </NavigationPage>
   );
@@ -158,7 +265,7 @@ export default function TodoEditPage() {
 
 namespace S {
   export const FloatingActionButton = styled(Fab)`
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     right: 20px;
   `;

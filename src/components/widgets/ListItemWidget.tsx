@@ -8,12 +8,14 @@ import {
   Box,
   Paper,
   styled,
-  ListItemButton
+  ListItemButton,
+  Typography
 } from '@mui/material';
 
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import RightIcon from '@mui/icons-material/ArrowRightAlt';
 import ListIcon from '@mui/icons-material/ListAltOutlined';
+import { formatDateTime } from '@/utils/dateUtils';
 
 export type ListItemWidgetProps = {
   title: string;
@@ -21,6 +23,7 @@ export type ListItemWidgetProps = {
   selected?: boolean;
   onDelete: () => void;
   onPress: () => void;
+  createdAt: string;
 };
 
 export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
@@ -62,14 +65,29 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
               <ListIcon />
             </Avatar>
           </ListItemAvatar>
-          <ListItemText primary={props.title} secondary={props.description} />
+          <Box sx={{ flexGrow: 1 }}>
+            <ListItemText 
+              primary={props.title} 
+              secondary={
+                <React.Fragment>
+                  <Typography component="span" variant="body2" color="text.primary">
+                    {props.description}
+                  </Typography>
+                  <br />
+                  <Typography component="span" variant="caption" color="text.secondary">
+                    Created {formatDateTime(props.createdAt)}
+                  </Typography>
+                </React.Fragment>
+              }
+            />
+          </Box>
         </ListItemButton>
       </ListItem>
     </S.MainPaper>
   );
 };
 
-export namespace S {
+namespace S {
   export const MainPaper = styled(Paper)`
     margin-bottom: 10px;
   `;
