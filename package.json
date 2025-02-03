@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "start": "pnpm build && pnpm preview"
+    "start": "npm run build && npm run preview"
   },
   "dependencies": {
     "@powersync/react": "^1.5.1",
@@ -39,5 +39,9 @@
     "vite-plugin-pwa": "^0.19.2",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
