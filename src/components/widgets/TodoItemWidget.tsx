@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListItem, IconButton, ListItemAvatar, ListItemText, Box, styled, Paper, ListItemButton } from '@mui/material';
+import { ListItem, IconButton, ListItemAvatar, ListItemText, Box, styled, Paper, ListItemButton, Checkbox } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
@@ -9,6 +9,9 @@ export type TodoItemWidgetProps = {
   isComplete: boolean;
   onDelete: () => void;
   toggleCompletion: () => void;
+  isSelected?: boolean;
+  onSelect?: (selected: boolean) => void;
+  showSelection?: boolean;
 };
 
 export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
@@ -30,13 +33,22 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
           </Box>
         }
       >
+        {props.showSelection && (
+          <Checkbox
+            edge="start"
+            checked={props.isSelected}
+            onChange={(e) => props.onSelect?.(e.target.checked)}
+            inputProps={{ 'aria-label': 'Select todo item' }}
+            sx={{ ml: 1 }}
+          />
+        )}
         <ListItemButton
           onClick={() => {
             props.toggleCompletion();
           }}
         >
           <ListItemAvatar>
-            <IconButton edge="end" aria-label="toggle">
+            <IconButton edge="end" aria-label="toggle completion">
               {props.isComplete ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
             </IconButton>
           </ListItemAvatar>
