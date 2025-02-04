@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "start": "npm run build && npm run preview"
+    "start": "pnpm build && npm preview"
   },
   "dependencies": {
     "@powersync/react": "^1.5.1",
@@ -42,6 +42,6 @@
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "pnpm": ">=8.0.0"
   }
 }
