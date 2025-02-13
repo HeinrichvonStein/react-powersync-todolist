@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "start": "pnpm build && npm preview"
+    "start": "npm build && npm preview"
   },
   "dependencies": {
     "@powersync/react": "^1.5.1",
@@ -26,6 +26,7 @@
     "react-router-dom": "^6.22.3"
   },
   "devDependencies": {
+    "@swc/core": "~1.6.0",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.11.25",
     "@types/react": "^18.2.64",
@@ -36,6 +37,8 @@
     "typescript": "^5.4.2",
     "vite": "^5.1.5",
     "vite-plugin-pwa": "^0.19.2",
+    "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"
+
   }
 }

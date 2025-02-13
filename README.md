@@ -11,7 +11,7 @@ A step-by-step guide on Supabase<>PowerSync integration is available [here](http
 In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
 
 ```bash
-pnpm install
+npm install
 ```
 
 Set up the Environment variables: Copy the `.env.local.template` file:
@@ -25,7 +25,7 @@ And then edit `.env.local` to insert your credentials for Supabase.
 Run the development server:
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
@@ -37,13 +37,13 @@ This demo is PWA compatible, and works fully offline. PWA is not available in de
 Build the production codebase:
 
 ```bash
-pnpm build
+npm build
 ```
 
 Run the production server:
 
 ```bash
-pnpm preview
+npm preview
 ```
 
 Open a browser on the served URL and install the PWA.
