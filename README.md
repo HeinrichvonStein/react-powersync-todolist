@@ -14,13 +14,7 @@ In the repo directory, use [pnpm](https://pnpm.io/installation) to install depen
 npm install
 ```
 
-Set up the Environment variables: Copy the `.env.local.template` file:
-
-```bash
-cp .env.local.template .env.local
-```
-
-And then edit `.env.local` to insert your credentials for Supabase.
+Set up the Environment variables and edit `.env` to insert your credentials for Supabase.
 
 Run the development server:
 
